@@ -9,7 +9,13 @@ export function useCreateToDo() {
     mutationFn: async (input: Schema["Todo"]["createType"]) => {
       return client.models.Todo.create(input);
     },
-    onSuccess: () => {
+    onSuccess: (result) => {
+      if (result.errors && result.errors.length > 0) {  
+        // concatenate all error messages
+        const errorMessages = result.errors.map((error) => error.message).join(", ");
+        throw new Error(errorMessages);
+      }
+
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       
     },
@@ -27,9 +33,11 @@ export function useGetToDo(id: string) {
         { id }
       );
       
-      if (errors) {
+      if (errors && errors.length > 0 ) {
         console.error("Failed to fetch todo", errors);
-        throw new Error(errors[0]?.message || "Failed to fetch todo");
+        // concatenate all error messages
+        const errorMessages = errors.map((error) => error.message).join(", ");
+        throw new Error(errorMessages);
       }
       
       if (!data) {
@@ -49,7 +57,12 @@ export function useDeleteToDo() {
     mutationFn: async (id: string) => {
       return client.models.Todo.delete({ id });
     },
-    onSuccess: (_, id) => {
+    onSuccess: (result, id) => {
+      if (result.errors && result.errors.length > 0) {
+        // concatenate all error messages
+        const errorMessages = result.errors.map((error) => error.message).join(", ");
+        throw new Error(errorMessages);
+      }
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       queryClient.invalidateQueries({ queryKey: ['todo', id] });
       
@@ -68,40 +81,18 @@ export function useUpdateToDo() {
       return client.models.Todo.update(input);
     },
     onSuccess: (result) => {
+      if (result.errors && result.errors.length > 0) {
+        //concatenate all error messages
+        const errorMessages = result.errors.map((error) => error.message).join(", ");
+        throw new Error(errorMessages);
+      }
       queryClient.invalidateQueries({ queryKey: ['todos'] });
       if (result.data?.id) {
         queryClient.invalidateQueries({ queryKey: ['todo', result.data.id] });
       }
-
     },
     onError: (error) => {
       console.error(error);
-    },
-  });
-}
-
-export function useGetToDos(options?: { nextToken?: string }) {
-
-  return useQuery({
-    queryKey: ['todos', options?.nextToken],
-    queryFn: async () => {
-      const result = await client.models.Todo.list({
-        limit: 100,
-        nextToken: options?.nextToken,
-      });
-
-      // console.log("list bowel movements result", result);
-      
-      if (result.errors) {
-        console.error("Failed to fetch todos", result.errors);
-        throw new Error("Failed to fetch todos");
-      }
-      
-      
-      return {
-        items: result.data,
-        nextToken: result.nextToken
-      };
     },
   });
 }

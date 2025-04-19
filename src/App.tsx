@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useCreateToDo } from "./hooks/use-to-do";
 import { client } from "@/src/lib/amplify-client";
 import type { Schema } from "@/amplify/data/resource";
+import { ToDoItem } from "./components/ToDoItem";
 
 function App() {
-  const [ todos, setTodos ] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
   const { mutate: createTodo, isPending, error } = useCreateToDo();
 
   function handleCreateTodo() {
@@ -31,11 +32,11 @@ function App() {
           Error creating todo: {error.message}
         </div>
       )}
-      <ul>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", margin: "10px" }}>
         {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
+          <ToDoItem key={todo.id} todo={todo} />
         ))}
-      </ul>
+      </div>
       <div>
         🥳 App successfully hosted. Try creating a new todo.
         <br />

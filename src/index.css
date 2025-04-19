@@ -63,3 +63,14 @@ a {
   font-weight: 800;
   text-decoration: none;
 }
+
+input {
+  outline: none;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+input:focus {
+  border-width: 2px;
+  border-color: #646cff;
+}

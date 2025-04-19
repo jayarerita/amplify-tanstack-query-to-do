@@ -1,0 +1,70 @@
+import { useState } from "react";
+import { useUpdateToDo, useDeleteToDo } from "../hooks/use-to-do";
+import type { Schema } from "@/amplify/data/resource";
+
+interface ToDoItemProps {
+  todo: Schema["Todo"]["type"];
+}
+
+export function ToDoItem({ todo }: ToDoItemProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(todo.content || "");
+
+  const { mutate: updateTodo, isPending: isUpdating, error: updateError } = useUpdateToDo();
+  const { mutate: deleteTodo, isPending: isDeleting, error: deleteError } = useDeleteToDo();
+
+  const handleEdit = () => {
+    if (isEditing) {
+      updateTodo({ id: todo.id, content: editContent });
+      setIsEditing(false);
+    } else {
+      setIsEditing(true);
+    }
+  };
+
+  const handleDelete = () => {
+    if (window.confirm("Are you sure you want to delete this todo?")) {
+      deleteTodo(todo.id);
+    }
+  };
+
+  return (
+    <div style={{ backgroundColor: "white", padding: "10px", borderRadius: "5px" }}>
+      <span style={{display: "flex", flexDirection: "row", justifyContent: "space-between"}}>
+      {isEditing ? (
+        <input
+          style={{ width: "100%", marginRight: "10px" }}
+          type="text"
+          value={editContent}
+          onChange={(e) => setEditContent(e.target.value)}
+          disabled={isUpdating}
+        />
+      ) : (
+        <span>{todo.content}</span>
+      )}
+      <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
+        <button
+          onClick={handleEdit}
+          disabled={isUpdating || isDeleting}
+          style={{ padding: "5px 10px" }}
+        >
+          {isUpdating ? "Saving..." : isEditing ? "Save" : "Edit"}
+        </button>
+        <button
+          onClick={handleDelete}
+          disabled={isDeleting || isUpdating}
+          style={{ padding: "5px 10px" }}
+        >
+          {isDeleting ? "Deleting..." : "Delete"}
+        </button>
+      </div>
+      </span>
+
+      {(updateError || deleteError) && (
+        <div style={{ color: "red", fontSize: "0.8em", marginTop: "5px" }}>
+          {updateError?.message || deleteError?.message}
+        </div>
+      )}
+    </div>
+  );
+} 
