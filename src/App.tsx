@@ -1,11 +1,18 @@
 import { useEffect, useState } from "react";
-import type { Schema } from "../amplify/data/resource";
-import { generateClient } from "aws-amplify/data";
-
-const client = generateClient<Schema>();
+import { useCreateToDo } from "./hooks/use-to-do";
+import { client } from "@/src/lib/amplify-client";
+import type { Schema } from "@/amplify/data/resource";
 
 function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const [ todos, setTodos ] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const { mutate: createTodo, isPending, error } = useCreateToDo();
+
+  function handleCreateTodo() {
+    const content = window.prompt("Todo content");
+    if (content) {
+      createTodo({ content });
+    }
+  }
 
   useEffect(() => {
     client.models.Todo.observeQuery().subscribe({
@@ -13,14 +20,17 @@ function App() {
     });
   }, []);
 
-  function createTodo() {
-    client.models.Todo.create({ content: window.prompt("Todo content") });
-  }
-
   return (
     <main>
       <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
+      <button onClick={handleCreateTodo} disabled={isPending}>
+        {isPending ? "Creating..." : "+ new"}
+      </button>
+      {error && (
+        <div style={{ color: "red", marginTop: "10px" }}>
+          Error creating todo: {error.message}
+        </div>
+      )}
       <ul>
         {todos.map((todo) => (
           <li key={todo.id}>{todo.content}</li>
