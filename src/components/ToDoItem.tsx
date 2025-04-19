@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useUpdateToDo, useDeleteToDo } from "../hooks/use-to-do";
+import { useState, useEffect } from "react";
+import { useUpdateToDo, useDeleteToDo, useGetToDo } from "../hooks/use-to-do";
 import type { Schema } from "@/amplify/data/resource";
 
 interface ToDoItemProps {
@@ -9,10 +9,23 @@ interface ToDoItemProps {
 export function ToDoItem({ todo }: ToDoItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(todo.content || "");
+  const [content, setContent] = useState(todo.content || "");
 
   const { mutate: updateTodo, isPending: isUpdating, error: updateError } = useUpdateToDo();
   const { mutate: deleteTodo, isPending: isDeleting, error: deleteError } = useDeleteToDo();
+  const { data: todoData, isLoading: isLoading, refetch: refetchTodo } = useGetToDo(todo.id);
 
+  // Refetch the todo data
+  const handleRefresh = () => {
+    refetchTodo();
+  }
+
+  // Update the content when the todo data is updated
+  useEffect(() => {
+    setContent(todoData?.content || "");
+  }, [todoData]);
+
+  // Update the todo content in the database
   const handleEdit = () => {
     if (isEditing) {
       updateTodo({ id: todo.id, content: editContent });
@@ -22,6 +35,7 @@ export function ToDoItem({ todo }: ToDoItemProps) {
     }
   };
 
+  // Delete the todo from the database
   const handleDelete = () => {
     if (window.confirm("Are you sure you want to delete this todo?")) {
       deleteTodo(todo.id);
@@ -40,7 +54,7 @@ export function ToDoItem({ todo }: ToDoItemProps) {
           disabled={isUpdating}
         />
       ) : (
-        <span>{todo.content}</span>
+        <span>{content}</span>
       )}
       <div style={{ display: "flex", gap: "10px", marginTop: "5px" }}>
         <button
@@ -56,6 +70,13 @@ export function ToDoItem({ todo }: ToDoItemProps) {
           style={{ padding: "5px 10px" }}
         >
           {isDeleting ? "Deleting..." : "Delete"}
+        </button>
+        <button 
+          onClick={handleRefresh}
+          disabled={isLoading}
+          style={{ padding: "5px 10px" }}
+        >
+          {isLoading ? "Refreshing..." : "Refresh"}
         </button>
       </div>
       </span>

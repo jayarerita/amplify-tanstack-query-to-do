@@ -96,3 +96,18 @@ export function useUpdateToDo() {
     },
   });
 }
+
+export function useGetToDos() {
+  return useQuery({
+    queryKey: ['todos'],
+    queryFn: async () => {
+      const { data, errors } = await client.models.Todo.list();
+      if (errors && errors.length > 0) {
+        console.error("Failed to fetch todos", errors);
+        throw new Error("Failed to fetch todos");
+      }
+      console.log("Fetched todos", data);
+      return data;
+    },
+  });
+}
